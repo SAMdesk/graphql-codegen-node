@@ -1,0 +1,23 @@
+{
+  "name": "graphql-codegen-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SAMdesk/graphql-codegen-node.git"
+  },
+  "author": "",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/SAMdesk/graphql-codegen-node/issues"
+  },
+  "homepage": "https://github.com/SAMdesk/graphql-codegen-node#readme",
+  "dependencies": {
+    "graphql-request": "1.8.2",
+    "minimist": "1.2.0"
+  }
+}
