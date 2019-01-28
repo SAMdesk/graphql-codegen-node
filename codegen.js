@@ -1,16 +1,3 @@
-#!/usr/bin/env node
-
-const fs = require('fs');
-const path = require('path');
-const { request } = require('graphql-request');
-
-const argv = require('minimist')(process.argv.slice(2));
-
-if(!argv.config) {
-    console.error('Missing required parameter: --config');
-    process.exit(1);
-}
-
 const introspection_query = `
     query IntrospectionQuery {
       __schema {
@@ -205,59 +192,56 @@ function mkdirs(file_path) {
     fs.mkdirSync(dirname);
 }
 
-const config_path = path.resolve(process.cwd(), argv.config);
-const config = require(config_path);
-Promise.all(config.map((c) => {
+module.exports = function(config) {
 
-    return request(c.schema, introspection_query).then((data) => {
+  return Promise.all(config.map((c) => {
 
-        let output = '';
+      return request(c.schema, introspection_query).then((data) => {
 
-        output += `const { GraphQLClient } = require('graphql-request');\n`;
-        output += `\n`;
-        output += `module.exports = class ${c.name} {\n`;
-        output += `\n`;
+          let output = '';
 
-        output += `${tabs(1)}constructor(endpoint, options) {\n`;
-        output += `${tabs(2)}this.client = new GraphQLClient(endpoint, options);\n`;
-        output += `${tabs(1)}}\n`;
-        output += `\n`;
+          output += `const { GraphQLClient } = require('graphql-request');\n`;
+          output += `\n`;
+          output += `module.exports = class ${c.name} {\n`;
+          output += `\n`;
 
-        const types_map = {};
-        data.__schema.types.forEach((type) => {
-            types_map[type.name] = type;
-        });
+          output += `${tabs(1)}constructor(endpoint, options) {\n`;
+          output += `${tabs(2)}this.client = new GraphQLClient(endpoint, options);\n`;
+          output += `${tabs(1)}}\n`;
+          output += `\n`;
 
-        if(data.__schema.queryType) {
-            const query_type = types_map[data.__schema.queryType.name];
-            query_type.fields.forEach((fn) => {
-                output += generate_function(fn, 'query', types_map);
-            });
-        }
+          const types_map = {};
+          data.__schema.types.forEach((type) => {
+              types_map[type.name] = type;
+          });
 
-        if(data.__schema.mutationType) {
-            const mutation_type = types_map[data.__schema.mutationType.name];
-            mutation_type.fields.forEach((fn) => {
-                output += generate_function(fn, 'mutation', types_map);
-            });
-        }
+          if(data.__schema.queryType) {
+              const query_type = types_map[data.__schema.queryType.name];
+              query_type.fields.forEach((fn) => {
+                  output += generate_function(fn, 'query', types_map);
+              });
+          }
 
-        output += `};`;
+          if(data.__schema.mutationType) {
+              const mutation_type = types_map[data.__schema.mutationType.name];
+              mutation_type.fields.forEach((fn) => {
+                  output += generate_function(fn, 'mutation', types_map);
+              });
+          }
 
-        try {
-            const file_path = path.resolve(path.dirname(config_path), c.output);
-            mkdirs(file_path);
-            fs.writeFileSync(file_path, output);
-            return Promise.resolve();
-        } catch(ex) {
-            return Promise.reject(ex);
-        }
+          output += `};`;
 
-    });
+          try {
+              const file_path = path.resolve(path.dirname(config_path), c.output);
+              mkdirs(file_path);
+              fs.writeFileSync(file_path, output);
+              return Promise.resolve();
+          } catch(ex) {
+              return Promise.reject(ex);
+          }
 
-})).then(() => {
-    process.exit(0);
-}).catch((err) => {
-    console.error(err);
-    process.exit(1);
-});
+      });
+
+  }));
+
+}

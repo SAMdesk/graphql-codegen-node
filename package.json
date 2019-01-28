@@ -2,9 +2,9 @@
   "name": "graphql-codegen-node",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "codegen.js",
   "bin": {
-    "graphql-codegen-node": "index.js"
+    "graphql-codegen-node": "cli.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
