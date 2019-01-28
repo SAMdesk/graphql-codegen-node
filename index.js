@@ -205,7 +205,7 @@ function mkdirs(file_path) {
     fs.mkdirSync(dirname);
 }
 
-const config_path = path.resolve(__dirname, argv.config);
+const config_path = path.resolve(process.cwd(), argv.config);
 const config = require(config_path);
 Promise.all(config.map((c) => {
 
