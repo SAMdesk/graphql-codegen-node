@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { request } = require('graphql-request');
 
 const introspection_query = `
