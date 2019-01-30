@@ -236,7 +236,7 @@ module.exports = function(config) {
           output += `};`;
 
           try {
-              const file_path = path.resolve(path.dirname(config_path), c.output);
+              const file_path = path.resolve(process.cwd(), c.output);
               mkdirs(file_path);
               fs.writeFileSync(file_path, output);
               return Promise.resolve();
