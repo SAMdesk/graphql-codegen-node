@@ -1,3 +1,5 @@
+const { request } = require('graphql-request');
+
 const introspection_query = `
     query IntrospectionQuery {
       __schema {
