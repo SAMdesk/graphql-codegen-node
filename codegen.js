@@ -125,9 +125,73 @@ function get_object_kind(type) {
     }
 }
 
+function generate_function_docs(fn, types_map) {
+
+  let output = '';
+
+  output += `${tabs(1)}/**\n`;
+
+  output += fn.args.map((arg) => {
+    return generate_function_param_doc(arg.name, arg.type, arg.defaultValue, false, false, types_map);
+  }).join('');
+
+  output += `${tabs(1)} * @param {function} done\n`;
+  output += `${tabs(1)} */\n`;
+
+  return output;
+
+}
+
+function generate_function_param_doc(name, type_obj, default_value, is_list, is_non_null, types_map) {
+
+  let type_name = null;
+  switch(type_obj.kind) {
+    case 'NON_NULL':
+      return generate_function_param_doc(name, type_obj.ofType, default_value, is_list, true, types_map);
+    case 'LIST':
+      return generate_function_param_doc(name, type_obj.ofType, default_value, true, is_non_null, types_map);
+    case 'OBJECT':
+    case 'INPUT_OBJECT':
+      type_name = 'object';
+      break;
+    default:
+      type_name = {
+        'ID': 'string',
+        'Int': 'number',
+        'Float': 'number',
+        'String': 'string',
+        'Boolean': 'boolean'
+      }[type_obj.name];
+      break;
+    }
+
+    let output = '';
+    output += `${tabs(1)} * @param {${type_name}} `
+    if(!is_non_null) output += `[`;
+    output += name;
+    if(default_value !== null) output += `=${default_value}`;
+    if(!is_non_null) output += `]`;
+    output += `\n`;
+
+    if(type_name === 'object') {
+      const type = types_map[type_obj.name];
+      output += type.inputFields.map((field) => {
+        let field_name = name;
+        if(is_list) field_name += `[]`;
+        field_name += `.${field.name}`;
+        return generate_function_param_doc(field_name, field.type, field.defaultValue, false, false, types_map);
+      }).join('');
+    }
+
+    return output;
+
+}
+
 function generate_function(fn, fn_type, types_map) {
 
     let output = '';
+
+    output += generate_function_docs(fn, types_map);
 
     const function_params = fn.args.map((arg) => {
         return arg.name;
@@ -141,8 +205,8 @@ function generate_function(fn, fn_type, types_map) {
         return `${arg.name}: $${arg.name}`;
     }).join(', ');
 
-    output += `${tabs(1)}${fn.name}(${function_params}) {\n`;
-    output += `${tabs(2)}return this.client.request(\`\n`;
+    output += `${tabs(1)}${fn.name}(${function_params}, done) {\n`;
+    output += `${tabs(2)}this.client.request(\`\n`;
     output += `${tabs(3)}${fn_type} ${fn.name}(${outer_query_params}) {\n`;
     output += `${tabs(4)}${fn.name}(${inner_query_params}) {\n`;
 
@@ -157,6 +221,10 @@ function generate_function(fn, fn_type, types_map) {
         output += `${tabs(3)}${arg.name}: ${arg.name}${i < (fn.args.length - 1) ? ',' : ''}\n`;
     });
 
+    output += `${tabs(2)}}).then((response) => {\n`;
+    output += `${tabs(3)}done(null, response.${fn.name});\n`;
+    output += `${tabs(2)}}, (err) => {\n`;
+    output += `${tabs(3)}done(err);\n`;
     output += `${tabs(2)}});\n`;
     output += `${tabs(1)}}\n`;
     output += `\n`;
