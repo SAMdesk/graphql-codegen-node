@@ -12,7 +12,7 @@ if(!argv.config) {
 const config_path = path.resolve(process.cwd(), argv.config);
 const config = require(config_path);
 
-codegen(config).then(() => {
+codegen(config, path.dirname(config_path)).then(() => {
     process.exit(0);
 }).catch((err) => {
     console.error(err);

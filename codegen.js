@@ -264,7 +264,9 @@ function mkdirs(file_path) {
     fs.mkdirSync(dirname);
 }
 
-module.exports = function(config) {
+module.exports = function(config, base_path) {
+
+  if(!base_path) base_path = process.cwd();
 
   return Promise.all(config.map((c) => {
 
@@ -304,7 +306,7 @@ module.exports = function(config) {
           output += `};`;
 
           try {
-              const file_path = path.resolve(process.cwd(), c.output);
+              const file_path = path.resolve(base_path, c.output);
               mkdirs(file_path);
               fs.writeFileSync(file_path, output);
               return Promise.resolve();
