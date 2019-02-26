@@ -274,6 +274,7 @@ module.exports = function(config, base_path) {
 
           let output = '';
 
+          output += `const _ = require('lodash');\n`;
           output += `const { GraphQLClient } = require('graphql-request');\n`;
           output += `\n`;
           output += `module.exports = class ${c.name} {\n`;
