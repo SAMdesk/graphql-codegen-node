@@ -279,7 +279,7 @@ module.exports = function(config, base_path) {
           output += `module.exports = class ${c.name} {\n`;
           output += `\n`;
 
-          output += `${tabs(1)}constructor(endpoint, options) {\n`;
+          output += `${tabs(1)}constructor(person) {\n`;
           output += `${tabs(2)}let options = _.cloneDeep(KnowledgeServiceClient.options);\n`;
           output += `${tabs(2)}options.headers.person = JSON.stringify({\n`;
           output += `${tabs(3)}_id: person._id,\n`;
