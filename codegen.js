@@ -325,6 +325,9 @@ module.exports = function(config, base_path) {
               return Promise.reject(ex);
           }
 
+      }, (e) => {
+          console.log("Error requesting endpoint metadata. Details: ", JSON.stringify(e.response));
+          Promise.reject(e);
       });
 
   }));
