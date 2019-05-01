@@ -281,17 +281,17 @@ module.exports = function(config, base_path) {
           output += `\n`;
 
           output += `${tabs(1)}constructor(person) {\n`;
-          output += `${tabs(2)}let options = _.cloneDeep(KnowledgeServiceClient.options);\n`;
+          output += `${tabs(2)}let options = _.cloneDeep(${c.name}.options);\n`;
           output += `${tabs(2)}options.headers.person = JSON.stringify({\n`;
           output += `${tabs(3)}_id: person._id,\n`;
           output += `${tabs(3)}name: person.name\n`;
           output += `${tabs(2)}});\n`;
-          output += `${tabs(2)}this.client = new GraphQLClient(KnowledgeServiceClient.endpoint, options);\n`;
+          output += `${tabs(2)}this.client = new GraphQLClient(${c.name}.endpoint, options);\n`;
           output += `${tabs(1)}}\n`;
           output += `\n`;
           output += `${tabs(1)}static init(endpoint, options) {\n`;
-          output += `${tabs(2)}KnowledgeServiceClient.endpoint = endpoint;\n`;
-          output += `${tabs(2)}KnowledgeServiceClient.options = options;\n`;
+          output += `${tabs(2)}${c.name}.endpoint = endpoint;\n`;
+          output += `${tabs(2)}${c.name}.options = options;\n`;
           output += `${tabs(1)}}\n`;
           output += `\n`;
 
