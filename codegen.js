@@ -142,6 +142,55 @@ function generate_function_docs(fn, types_map) {
 
 }
 
+function generate_helpers(c) {
+    let output = "";
+    output += "\n";
+
+    // Create the key Getter first
+    output +=  `${tabs(1)}getClientKey(force=null) {\n`;
+    output += `${tabs(2)}return new Promise((resolve, reject) => {\n`;
+    output += `${tabs(3)}let now = Date.now();\n`;
+    output += `${tabs(3)}if (${c.name}.auth_key === null || (now - ${c.name}.last_fetched_date.getTime())/60000 >= 5 || force) {\n`;
+    output += `${tabs(4)}${c.name}.GraphQlClient.find({application:${c.name}.application}).sort("-created").lean().exec((err, clients)=> {\n`;
+    output += `${tabs(5)}if (err || !clients.length){\n`;
+    output += `${tabs(6)}reject(err || 'There are no clients for this application')\n`;
+    output +=`${tabs(5)}}\n`;
+    output += `${tabs(5)}let client = clients[0];\n`;
+    output += `${tabs(5)}${c.name}.auth_key = client.key;\n`;
+    output += `${tabs(5)}${c.name}.last_fetched_date = new Date(now);\n`;
+    output += `${tabs(5)}this.options.headers = {Authorization: ${c.name}.auth_key, person: JSON.stringify({name:this.person.name, _id: this.person._id})};\n`;
+    output += `${tabs(5)}this.client = new GraphQLClient(${c.name}.endpoint, this.options);\n`;
+    output += `${tabs(5)}resolve();\n`;
+    output += `${tabs(4)}});\n`;
+    output += `${tabs(3)}} else {\n`;
+    output += `${tabs(4)}this.options.headers = {Authorization: ${c.name}.auth_key, person: JSON.stringify({name:this.person.name, _id: this.person._id})};\n`;
+    output += `${tabs(4)}this.client = new GraphQLClient(${c.name}.endpoint, this.options);\n`;
+    output += `${tabs(4)}resolve();\n`;
+    output += `${tabs(3)}}\n`;
+    output += `${tabs(2)}});\n`;
+    output += `${tabs(1)}}\n`;
+    output += `\n`;
+
+    output +=  `${tabs(1)}RetryRequest(query, params, err, done) {\n`;
+    output +=  `${tabs(2)}let current_key = ${c.name}.auth_key\n`;
+    output += `${tabs(2)}this.getClientKey(true)\n`;
+    output += `${tabs(3)}.then(() => {\n`;
+    output += `${tabs(4)}if (current_key !== ${c.name}.auth_key) {\n`;
+    output += `${tabs(5)}return this.client.request(query, params)\n`;
+    output += `${tabs(4)}} else {\n`;
+    output += `${tabs(5)}done(err, null)\n`;
+    output += `${tabs(4)}}\n`;
+    output += `${tabs(3)}})\n`;
+    output += `${tabs(3)}.then((response) => {\n`;
+    output += `${tabs(4)}done(null,response)\n`;
+    output += `${tabs(3)}})\n`;
+    output += `${tabs(2)}}\n`;
+    output += `\n`;
+
+    return output;
+
+}
+
 function generate_function_param_doc(name, type_obj, default_value, is_list, is_non_null, types_map) {
 
   let type_name = null;
@@ -193,7 +242,9 @@ function generate_function(fn, fn_type, types_map) {
 
     output += generate_function_docs(fn, types_map);
 
+    let param_list = [];
     const function_params = fn.args.map((arg) => {
+        param_list.push(arg.name);
         return arg.name;
     }).join(', ');
 
@@ -206,25 +257,47 @@ function generate_function(fn, fn_type, types_map) {
     }).join(', ');
 
     output += `${tabs(1)}${fn.name}(${function_params}, done) {\n`;
-    output += `${tabs(2)}this.client.request(\`\n`;
+    output += `${tabs(2)}let query = \`\n`;
     output += `${tabs(3)}${fn_type} ${fn.name}(${outer_query_params}) {\n`;
     output += `${tabs(4)}${fn.name}(${inner_query_params}) {\n`;
-
     const return_type = types_map[get_object_type(fn.type)];
     output += generate_fields(return_type.fields, 5, types_map);
 
     output += `${tabs(4)}}\n`;
     output += `${tabs(3)}}\n`;
-    output += `${tabs(2)}\`, {\n`;
+    output += `${tabs(2)}\`;\n`;
 
-    fn.args.forEach((arg, i) => {
-        output += `${tabs(3)}${arg.name}: ${arg.name}${i < (fn.args.length - 1) ? ',' : ''}\n`;
+    output += `${tabs(2)}let parameters = {\n`;
+    param_list.forEach((param,index)=> {
+        if (index + 1 !== param_list.length){
+            output += `${tabs(3)}${param}:${param},\n`;
+        } else {
+            output += `${tabs(3)}${param}:${param}\n`;
+        }
     });
-
+    output += `${tabs(2)}};\n`;
+    output += `${tabs(2)}this.getClientKey()\n`;
+    output += `${tabs(2)}.then(() => {\n`;
+    output += `${tabs(3)}return this.client.request(query, parameters)\n`;
     output += `${tabs(2)}}).then((response) => {\n`;
     output += `${tabs(3)}done(null, response.${fn.name});\n`;
-    output += `${tabs(2)}}, (err) => {\n`;
-    output += `${tabs(3)}done(err);\n`;
+    output += `${tabs(2)}})\n`;
+    output += `${tabs(2)}.catch((err) => {\n`;
+    output += `${tabs(3)}if (err.response.status === 401) {\n`;
+    output += `${tabs(4)}this.RetryRequest(query, parameters, err, (error, response) => {\n`;
+    output += `${tabs(5)}if (error === null && response === undefined) {\n`;
+    output += `${tabs(6)}done(new Error("Something went wrong"))\n`;
+    output += `${tabs(5)}}\n`;
+    output += `${tabs(5)}else if (error) {\n`;
+    output += `${tabs(6)}done(error);\n`;
+    output += `${tabs(5)}}\n`;
+    output += `${tabs(5)}else {\n`;
+    output += `${tabs(6)}done(error, response.${fn.name});\n`;
+    output += `${tabs(5)}}\n`;
+    output += `${tabs(4)}})\n`;
+    output += `${tabs(3)}} else {\n`;
+    output += `${tabs(4)}done(err);\n`;
+    output += `${tabs(3)}}\n`;
     output += `${tabs(2)}});\n`;
     output += `${tabs(1)}}\n`;
     output += `\n`;
@@ -281,17 +354,20 @@ module.exports = function(config, base_path) {
           output += `\n`;
 
           output += `${tabs(1)}constructor(person) {\n`;
-          output += `${tabs(2)}let options = _.cloneDeep(${c.name}.options);\n`;
-          output += `${tabs(2)}options.headers.person = JSON.stringify({\n`;
-          output += `${tabs(3)}_id: person._id,\n`;
-          output += `${tabs(3)}name: person.name\n`;
-          output += `${tabs(2)}});\n`;
-          output += `${tabs(2)}this.client = new GraphQLClient(${c.name}.endpoint, options);\n`;
+          output += `${tabs(2)}this.options={};\n`;
+          output += `${tabs(2)}this.person = (person === undefined)? {name:"General", _id:"1234"}:{name: person.name, _id:person._id};\n`;
+          output += `${tabs(2)}this.client = null;\n`;
           output += `${tabs(1)}}\n`;
           output += `\n`;
-          output += `${tabs(1)}static init(endpoint, options) {\n`;
+          output += `${tabs(1)}static init(endpoint, options, locator, app_name) {\n`;
           output += `${tabs(2)}${c.name}.endpoint = endpoint;\n`;
           output += `${tabs(2)}${c.name}.options = options;\n`;
+          output += `${tabs(2)}${c.name}.locator = locator;\n`;
+          output += `${tabs(2)}${c.name}.application = app_name;\n`;
+          output += `${tabs(2)}${c.name}.mongoose = ${c.name}.locator.get('mongoose');\n`;
+          output += `${tabs(2)}${c.name}.GraphQlClient = ${c.name}.mongoose.model('GraphQlClient');\n`;
+          output += `${tabs(2)}${c.name}.last_fetched_date = new Date();\n`;
+          output += `${tabs(2)}${c.name}.auth_key = null;\n`;
           output += `${tabs(1)}}\n`;
           output += `\n`;
 
@@ -299,6 +375,8 @@ module.exports = function(config, base_path) {
           data.__schema.types.forEach((type) => {
               types_map[type.name] = type;
           });
+
+          output += generate_helpers(c);
 
           if(data.__schema.queryType) {
               const query_type = types_map[data.__schema.queryType.name];
