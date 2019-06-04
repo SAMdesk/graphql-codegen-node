@@ -376,7 +376,7 @@ module.exports = function(config, base_path) {
               types_map[type.name] = type;
           });
 
-          output+= generate_helpers(c);
+          output += generate_helpers(c);
 
           if(data.__schema.queryType) {
               const query_type = types_map[data.__schema.queryType.name];
@@ -396,7 +396,6 @@ module.exports = function(config, base_path) {
 
           try {
               const file_path = path.resolve(base_path, c.output);
-              console.log("File path: ", file_path);
               mkdirs(file_path);
               fs.writeFileSync(file_path, output);
               return Promise.resolve();
