@@ -283,7 +283,7 @@ function generate_function(fn, fn_type, types_map) {
     output += `${tabs(3)}done(null, response.${fn.name});\n`;
     output += `${tabs(2)}})\n`;
     output += `${tabs(2)}.catch((err) => {\n`;
-    output += `${tabs(3)}if (err.response.status === 401) {\n`;
+    output += `${tabs(3)}if (err.response && err.response.status === 401) {\n`;
     output += `${tabs(4)}this.RetryRequest(query, parameters, err, (error, response) => {\n`;
     output += `${tabs(5)}if (error === null && response === undefined) {\n`;
     output += `${tabs(6)}done(new Error("Something went wrong"))\n`;
