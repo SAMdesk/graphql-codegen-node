@@ -153,7 +153,7 @@ function generate_helpers(c) {
     output += `${tabs(3)}if (${c.name}.auth_key === null || (now - ${c.name}.last_fetched_date.getTime())/60000 >= 5 || force) {\n`;
     output += `${tabs(4)}${c.name}.GraphQlClient.find({application:${c.name}.application}).sort("-created").lean().exec((err, clients)=> {\n`;
     output += `${tabs(5)}if (err || !clients.length){\n`;
-    output += `${tabs(6)}reject(err || 'There are no clients for this application')\n`;
+    output += `${tabs(6)}reject(err || 'There are no clients for this application');\n`;
     output +=`${tabs(5)}}\n`;
     output += `${tabs(5)}let client = clients[0];\n`;
     output += `${tabs(5)}${c.name}.auth_key = client.key;\n`;
@@ -176,13 +176,13 @@ function generate_helpers(c) {
     output += `${tabs(2)}this.getClientKey(true)\n`;
     output += `${tabs(3)}.then(() => {\n`;
     output += `${tabs(4)}if (current_key !== ${c.name}.auth_key) {\n`;
-    output += `${tabs(5)}return this.client.request(query, params)\n`;
+    output += `${tabs(5)}return this.client.request(query, params);\n`;
     output += `${tabs(4)}} else {\n`;
-    output += `${tabs(5)}done(err, null)\n`;
+    output += `${tabs(5)}done(err, null);\n`;
     output += `${tabs(4)}}\n`;
     output += `${tabs(3)}})\n`;
     output += `${tabs(3)}.then((response) => {\n`;
-    output += `${tabs(4)}done(null,response)\n`;
+    output += `${tabs(4)}done(null,response);\n`;
     output += `${tabs(3)}})\n`;
     output += `${tabs(2)}}\n`;
     output += `\n`;
@@ -278,7 +278,7 @@ function generate_function(fn, fn_type, types_map) {
     output += `${tabs(2)}};\n`;
     output += `${tabs(2)}this.getClientKey()\n`;
     output += `${tabs(2)}.then(() => {\n`;
-    output += `${tabs(3)}return this.client.request(query, parameters)\n`;
+    output += `${tabs(3)}return this.client.request(query, parameters);\n`;
     output += `${tabs(2)}}).then((response) => {\n`;
     output += `${tabs(3)}done(null, response.${fn.name});\n`;
     output += `${tabs(2)}})\n`;
@@ -286,7 +286,7 @@ function generate_function(fn, fn_type, types_map) {
     output += `${tabs(3)}if (err.response && err.response.status === 401) {\n`;
     output += `${tabs(4)}this.RetryRequest(query, parameters, err, (error, response) => {\n`;
     output += `${tabs(5)}if (error === null && response === undefined) {\n`;
-    output += `${tabs(6)}done(new Error("Something went wrong"))\n`;
+    output += `${tabs(6)}done(new Error("Something went wrong"));\n`;
     output += `${tabs(5)}}\n`;
     output += `${tabs(5)}else if (error) {\n`;
     output += `${tabs(6)}done(error);\n`;
@@ -355,7 +355,7 @@ module.exports = function(config, base_path) {
 
           output += `${tabs(1)}constructor(person) {\n`;
           output += `${tabs(2)}this.options={};\n`;
-          output += `${tabs(2)}this.person = (person === undefined)? {name:"General", _id:"1234"}:{name: person.name, _id:person._id};\n`;
+          output += `${tabs(2)}this.person = {name: person.name, _id:person._id};\n`;
           output += `${tabs(2)}this.client = null;\n`;
           output += `${tabs(1)}}\n`;
           output += `\n`;
