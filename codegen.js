@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const { request } = require('graphql-request');
@@ -172,7 +174,7 @@ function generate_helpers(c) {
     output += `\n`;
 
     output +=  `${tabs(1)}RetryRequest(query, params, err, done) {\n`;
-    output +=  `${tabs(2)}let current_key = ${c.name}.auth_key\n`;
+    output +=  `${tabs(2)}let current_key = ${c.name}.auth_key;\n`;
     output += `${tabs(2)}this.getClientKey(true)\n`;
     output += `${tabs(3)}.then(() => {\n`;
     output += `${tabs(4)}if (current_key !== ${c.name}.auth_key) {\n`;
@@ -183,7 +185,7 @@ function generate_helpers(c) {
     output += `${tabs(3)}})\n`;
     output += `${tabs(3)}.then((response) => {\n`;
     output += `${tabs(4)}done(null,response);\n`;
-    output += `${tabs(3)}})\n`;
+    output += `${tabs(3)}});\n`;
     output += `${tabs(2)}}\n`;
     output += `\n`;
 
@@ -215,7 +217,7 @@ function generate_function_param_doc(name, type_obj, default_value, is_list, is_
     }
 
     let output = '';
-    output += `${tabs(1)} * @param {${type_name}} `
+    output += `${tabs(1)} * @param {${type_name}} `;
     if(!is_non_null) output += `[`;
     output += name;
     if(default_value !== null) output += `=${default_value}`;
@@ -261,7 +263,11 @@ function generate_function(fn, fn_type, types_map) {
     output += `${tabs(3)}${fn_type} ${fn.name}(${outer_query_params}) {\n`;
     output += `${tabs(4)}${fn.name}(${inner_query_params}) {\n`;
     const return_type = types_map[get_object_type(fn.type)];
-    output += generate_fields(return_type.fields, 5, types_map);
+    if(!return_type.fields) {
+        output += `${tabs(5)}value\n`;
+    } else {
+        output += generate_fields(return_type.fields, 5, types_map);
+    }
 
     output += `${tabs(4)}}\n`;
     output += `${tabs(3)}}\n`;
@@ -294,7 +300,7 @@ function generate_function(fn, fn_type, types_map) {
     output += `${tabs(5)}else {\n`;
     output += `${tabs(6)}done(error, response.${fn.name});\n`;
     output += `${tabs(5)}}\n`;
-    output += `${tabs(4)}})\n`;
+    output += `${tabs(4)}});\n`;
     output += `${tabs(3)}} else {\n`;
     output += `${tabs(4)}done(err);\n`;
     output += `${tabs(3)}}\n`;
@@ -347,6 +353,7 @@ module.exports = function(config, base_path) {
 
           let output = '';
 
+          output += `'use strict';\n\n`;
           output += `const _ = require('lodash');\n`;
           output += `const { GraphQLClient } = require('graphql-request');\n`;
           output += `\n`;
@@ -398,6 +405,9 @@ module.exports = function(config, base_path) {
               const file_path = path.resolve(base_path, c.output);
               mkdirs(file_path);
               fs.writeFileSync(file_path, output);
+
+              console.log(`Done - file written to ${file_path}`);
+
               return Promise.resolve();
           } catch(ex) {
               return Promise.reject(ex);
@@ -410,4 +420,4 @@ module.exports = function(config, base_path) {
 
   }));
 
-}
+};
