@@ -248,7 +248,7 @@ function generate_function(fn, fn_type, types_map) {
     const function_params = fn.args.map((arg) => {
         param_list.push(arg.name);
         return arg.name;
-    }).join(', ');
+    }).concat(['done']).join(', ');
 
     const outer_query_params = fn.args.map((arg) => {
         return `$${arg.name}: ${get_type_string(arg.type)}`;
@@ -258,18 +258,20 @@ function generate_function(fn, fn_type, types_map) {
         return `${arg.name}: $${arg.name}`;
     }).join(', ');
 
-    output += `${tabs(1)}${fn.name}(${function_params}, done) {\n`;
+    output += `${tabs(1)}${fn.name}(${function_params}) {\n`;
     output += `${tabs(2)}let query = \`\n`;
     output += `${tabs(3)}${fn_type} ${fn.name}(${outer_query_params}) {\n`;
-    output += `${tabs(4)}${fn.name}(${inner_query_params}) {\n`;
+    output += `${tabs(4)}${fn.name}(${inner_query_params})`;
+
     const return_type = types_map[get_object_type(fn.type)];
-    if(!return_type.fields) {
-        output += `${tabs(5)}value\n`;
-    } else {
+    if(return_type.kind === 'OBJECT') {
+        output += ` {\n`;
         output += generate_fields(return_type.fields, 5, types_map);
+        output += `${tabs(4)}}\n`;
+    } else {
+        output += `\n`;
     }
 
-    output += `${tabs(4)}}\n`;
     output += `${tabs(3)}}\n`;
     output += `${tabs(2)}\`;\n`;
 
