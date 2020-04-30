@@ -284,22 +284,18 @@ function generate_function(fn, fn_type, types_map) {
         }
     });
     output += `${tabs(2)}};\n`;
-    output += `${tabs(2)}this.getClientKey()\n`;
-    output += `${tabs(2)}.then(() => {\n`;
+    output += `${tabs(2)}this.getClientKey().then(() => {\n`;
     output += `${tabs(3)}return this.client.request(query, parameters);\n`;
     output += `${tabs(2)}}).then((response) => {\n`;
     output += `${tabs(3)}done(null, response.${fn.name});\n`;
-    output += `${tabs(2)}})\n`;
-    output += `${tabs(2)}.catch((err) => {\n`;
+    output += `${tabs(2)}}, (err) => {\n`;
     output += `${tabs(3)}if (err.response && err.response.status === 401) {\n`;
     output += `${tabs(4)}this.RetryRequest(query, parameters, err, (error, response) => {\n`;
     output += `${tabs(5)}if (error === null && response === undefined) {\n`;
     output += `${tabs(6)}done(new Error("Something went wrong"));\n`;
-    output += `${tabs(5)}}\n`;
-    output += `${tabs(5)}else if (error) {\n`;
+    output += `${tabs(5)}} else if (error) {\n`;
     output += `${tabs(6)}done(error);\n`;
-    output += `${tabs(5)}}\n`;
-    output += `${tabs(5)}else {\n`;
+    output += `${tabs(5)}} else {\n`;
     output += `${tabs(6)}done(error, response.${fn.name});\n`;
     output += `${tabs(5)}}\n`;
     output += `${tabs(4)}});\n`;
