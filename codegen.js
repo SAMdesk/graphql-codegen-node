@@ -353,7 +353,7 @@ module.exports = function(config, base_path) {
 
           output += `'use strict';\n\n`;
           output += `const _ = require('lodash');\n`;
-          output += `const { GraphQLClient } = require('graphql-request');\n`;
+          output += `const GraphQLClient = require('../../common/sam_graphql_client');\n`;
           output += `\n`;
           output += `module.exports = class ${c.name} {\n`;
           output += `\n`;
