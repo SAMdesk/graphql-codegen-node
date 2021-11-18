@@ -1,6 +1,6 @@
 {
   "name": "graphql-codegen-node",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "",
   "main": "codegen.js",
   "bin": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/SAMdesk/graphql-codegen-node#readme",
   "dependencies": {
-    "graphql-request": "1.8.2",
-    "minimist": "1.2.0"
+    "graphql-request": "3.6.1",
+    "minimist": "1.2.5"
   }
 }
