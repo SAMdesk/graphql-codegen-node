@@ -21,6 +21,6 @@
   "homepage": "https://github.com/SAMdesk/graphql-codegen-node#readme",
   "dependencies": {
     "graphql-request": "3.6.1",
-    "minimist": "1.2.5"
+    "minimist": "1.2.6"
   }
 }
